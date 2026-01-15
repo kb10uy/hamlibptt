@@ -52,7 +52,7 @@ fn call_rigctl(rigctl: &ConfigRigctl, commands: &[String]) -> Result<()> {
         Ok(())
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(HamlibPttError::RigCtl(output.status, stderr.to_string()))
+        Err(HamlibPttError::Rigctl(output.status, stderr.to_string()))
     }
 }
 
@@ -72,6 +72,15 @@ fn call_rigctld(rigctld: &ConfigRigctld, commands: &[String]) -> Result<()> {
         if response_line.starts_with("RPRT") {
             break;
         }
+    }
+
+    let code = response_line
+        .trim()
+        .split_once(" ")
+        .map(|(_, c)| c)
+        .unwrap_or("(cannot decode)");
+    if code != "0" {
+        return Err(HamlibPttError::Rigctld(code.to_string()));
     }
 
     Ok(())

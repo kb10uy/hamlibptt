@@ -29,7 +29,10 @@ pub enum HamlibPttError {
     ConfigDataInvalid,
 
     #[error("rigctl failed with status {0}: {1}")]
-    RigCtl(ExitStatus, String),
+    Rigctl(ExitStatus, String),
+
+    #[error("rigctld call failed with status {0}")]
+    Rigctld(String),
 }
 
 impl HamlibPttError {
