@@ -1,4 +1,7 @@
-use std::process::{Command, Stdio};
+use std::{
+    os::windows::process::CommandExt,
+    process::{Command, Stdio},
+};
 
 use crate::core::{
     config::ConfigRig,
@@ -14,6 +17,7 @@ pub fn call_rigctl(rigctl_path: &str, rig: &ConfigRig, commands: Option<&[String
     }
 
     let rigctl = Command::new(rigctl_path)
+        .creation_flags(0x08000000)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
