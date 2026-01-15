@@ -10,12 +10,11 @@ use crate::{
     hamlib::HamlibCommander,
 };
 
-static COMMANDER: OnceLock<Mutex<Box<dyn HamlibCommander>>> = OnceLock::new();
+static HAMLIB_COMMANDER: OnceLock<Mutex<Box<dyn HamlibCommander>>> = OnceLock::new();
 static COMMANDS: OnceLock<ConfigCommands> = OnceLock::new();
 
-
-pub fn run_command(cmd: impl FnOnce(&ConfigCommands) -> &[String]) -> Result<()> {
-    let Some(commander) = COMMANDER.get() else {
+pub fn send_hamlib_command(cmd: impl FnOnce(&ConfigCommands) -> &[String]) -> Result<()> {
+    let Some(commander) = HAMLIB_COMMANDER.get() else {
         return Ok(());
     };
     let Some(commands) = COMMANDS.get().map(cmd) else {
@@ -30,6 +29,6 @@ pub fn run_command(cmd: impl FnOnce(&ConfigCommands) -> &[String]) -> Result<()>
 }
 
 fn initialize_backend(commander: Box<dyn HamlibCommander>, commands: ConfigCommands) {
-    COMMANDER.set(Mutex::new(commander)).ok();
+    HAMLIB_COMMANDER.set(Mutex::new(commander)).ok();
     COMMANDS.set(commands).ok();
 }

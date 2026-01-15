@@ -1,9 +1,9 @@
-use crate::{core::error::Result, extfsk::run_command};
+use crate::{core::error::Result, extfsk::send_hamlib_command};
 
 pub fn set_ptt(tx: bool, _mmsstv_scan: bool) -> Result<()> {
     if tx {
-        run_command(|cmds| cmds.tx.as_deref().unwrap_or_default())
+        send_hamlib_command(|cmds| cmds.tx.as_deref().unwrap_or_default())
     } else {
-        run_command(|cmds| cmds.rx.as_deref().unwrap_or_default())
+        send_hamlib_command(|cmds| cmds.rx.as_deref().unwrap_or_default())
     }
 }
