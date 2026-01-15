@@ -3,7 +3,7 @@ use crate::{
     rigctl::call,
 };
 
-pub fn set_ptt(config: &Config, tx: bool) -> Result<()> {
+pub fn set_ptt(config: &Config, tx: bool, _mmsstv_scan: bool) -> Result<()> {
     if tx {
         call(config, config.commands.tx.as_deref())
     } else {

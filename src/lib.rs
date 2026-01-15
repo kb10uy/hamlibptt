@@ -97,7 +97,9 @@ pub extern "system" fn extfskSetPTT(tx: c_long) {
         return;
     };
 
-    match set_ptt(config, tx != 0) {
+    let set_tx = (tx & 0b1) != 0;
+    let set_scan = (tx & 0b10) != 0;
+    match set_ptt(config, set_tx, set_scan) {
         Ok(()) => (),
         Err(e) => {
             e.show_dialog();
