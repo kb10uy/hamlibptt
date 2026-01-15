@@ -1,5 +1,5 @@
-use crate::core::error::Result;
+use crate::core::{config::Config, error::Result};
 
-pub fn set_ptt(tx: bool) -> Result<()> {
+pub fn set_ptt(config: &Config, tx: bool) -> Result<()> {
     Ok(())
 }

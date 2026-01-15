@@ -9,11 +9,14 @@ use windows::Win32::{
 };
 
 use crate::{
-    core::dll::{DLL_DIRECTORY, on_dll_attach, on_dll_detach},
+    core::{
+        config::CONFIG,
+        dll::{DLL_DIRECTORY, on_dll_attach, on_dll_detach},
+    },
     extfsk::{
-        ExtfskParameter, close,
+        ExtfskParameter,
+        core::{close, open},
         fsk::{is_busy, put_char},
-        open,
         ptt::set_ptt,
     },
 };
@@ -53,7 +56,11 @@ pub extern "system" fn extfskOpen(parameter: c_long) -> c_int {
 
 #[unsafe(no_mangle)]
 pub extern "system" fn extfskClose() {
-    match close() {
+    let Some(config) = CONFIG.get() else {
+        return;
+    };
+
+    match close(config) {
         Ok(()) => (),
         Err(e) => {
             e.show_dialog();
@@ -63,17 +70,33 @@ pub extern "system" fn extfskClose() {
 
 #[unsafe(no_mangle)]
 pub extern "system" fn extfskIsTxBusy() -> c_long {
-    if is_busy().unwrap_or(false) { 1 } else { 0 }
+    let Some(config) = CONFIG.get() else {
+        return 0;
+    };
+
+    if is_busy(config).unwrap_or(false) {
+        1
+    } else {
+        0
+    }
 }
 
 #[unsafe(no_mangle)]
 pub extern "system" fn extfskPutChar(c: c_uchar) {
-    put_char(c).ok();
+    let Some(config) = CONFIG.get() else {
+        return;
+    };
+
+    put_char(config, c).ok();
 }
 
 #[unsafe(no_mangle)]
 pub extern "system" fn extfskSetPTT(tx: c_long) {
-    match set_ptt(tx != 0) {
+    let Some(config) = CONFIG.get() else {
+        return;
+    };
+
+    match set_ptt(config, tx != 0) {
         Ok(()) => (),
         Err(e) => {
             e.show_dialog();
