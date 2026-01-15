@@ -1,0 +1,19 @@
+rigctl_path = ""
+
+[rig]
+model_id = 4
+device = "localhost:12345"
+
+[commands]
+open = []
+close = []
+tx = [
+  "set_level", "MONITOR_GAIN", "0.15",
+  "set_mode", "PKTLSB", "-1",
+  "set_ptt", "1",
+]
+rx = [
+  "set_ptt", "0",
+  "set_mode", "LSB", "-1",
+  "set_level", "MONITOR_GAIN", "0.0"
+]
