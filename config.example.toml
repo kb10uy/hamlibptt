@@ -1,19 +1,23 @@
-rigctl_path = ""
+mode = "rigctld"
 
-[rig]
-model_id = 4
-device = "localhost:12345"
+[rigctl]
+rigctl_path = "/usr/bin/rigctl"
+model_id = 3085
+device = "/dev/ttyACM0"
+
+[rigctld]
+address = "127.0.0.1:4532"
 
 [commands]
 open = []
 close = []
 tx = [
-  "set_level", "MONITOR_GAIN", "0.15",
-  "set_mode", "PKTLSB", "-1",
-  "set_ptt", "1",
+  "L", "MONITOR_GAIN", "0.15",
+  "M", "PKTLSB", "-1",
+  "T", "1",
 ]
 rx = [
-  "set_ptt", "0",
-  "set_mode", "LSB", "-1",
-  "set_level", "MONITOR_GAIN", "0.0",
+  "T", "0",
+  "M", "LSB", "-1",
+  "L", "MONITOR_GAIN", "0.0",
 ]
