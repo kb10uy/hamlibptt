@@ -10,7 +10,12 @@ use windows::Win32::{
 
 use crate::{
     core::dll::{DLL_DIRECTORY, on_dll_attach, on_dll_detach},
-    extfsk::{close, open},
+    extfsk::{
+        ExtfskParameter, close,
+        fsk::{is_busy, put_char},
+        open,
+        ptt::set_ptt,
+    },
 };
 
 #[unsafe(no_mangle)]
@@ -29,15 +34,19 @@ pub extern "system" fn DllMain(module: HMODULE, call_reason: c_ulong, _: *mut ()
 }
 
 #[unsafe(no_mangle)]
-pub extern "system" fn extfskOpen(_parameter: c_long) {
+pub extern "system" fn extfskOpen(parameter: c_long) -> c_int {
     let Some(dll_directory) = DLL_DIRECTORY.get() else {
-        return;
+        return 0;
     };
 
-    match open(dll_directory) {
-        Ok(()) => (),
+    match open(
+        dll_directory,
+        ExtfskParameter::parse(parameter.cast_unsigned()),
+    ) {
+        Ok(()) => 1,
         Err(e) => {
             e.show_dialog();
+            0
         }
     }
 }
@@ -54,16 +63,20 @@ pub extern "system" fn extfskClose() {
 
 #[unsafe(no_mangle)]
 pub extern "system" fn extfskIsTxBusy() -> c_long {
-    println!("IsTxBusy?");
-    0
+    if is_busy().unwrap_or(false) { 1 } else { 0 }
 }
 
 #[unsafe(no_mangle)]
 pub extern "system" fn extfskPutChar(c: c_uchar) {
-    println!("PutChar: {c}");
+    put_char(c).ok();
 }
 
 #[unsafe(no_mangle)]
 pub extern "system" fn extfskSetPTT(tx: c_long) {
-    println!("SetPTT: {tx}");
+    match set_ptt(tx != 0) {
+        Ok(()) => (),
+        Err(e) => {
+            e.show_dialog();
+        }
+    }
 }
