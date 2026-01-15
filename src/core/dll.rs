@@ -2,7 +2,7 @@ use std::{ffi::OsString, os::windows::ffi::OsStringExt, path::PathBuf, sync::Onc
 
 use windows::Win32::{Foundation::HMODULE, System::LibraryLoader::GetModuleFileNameW};
 
-use crate::error::{HamlibPttError, Result};
+use crate::core::error::{HamlibPttError, Result};
 
 pub static DLL_DIRECTORY: OnceLock<PathBuf> = OnceLock::new();
 

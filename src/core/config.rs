@@ -2,7 +2,7 @@ use std::{fs::read_to_string, path::Path, sync::OnceLock};
 
 use serde::Deserialize;
 
-use crate::error::Result;
+use crate::core::error::Result;
 
 pub const CONFIG_FILENAME: &str = "hamlibptt.toml";
 pub static CONFIG: OnceLock<Config> = OnceLock::new();
