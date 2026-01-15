@@ -1,4 +1,4 @@
-use std::{io::Error as IoError, result::Result as StdResult};
+use std::{io::Error as IoError, process::ExitStatus, result::Result as StdResult};
 
 use thiserror::Error as ThisError;
 use toml::de::Error as TomlError;
@@ -21,6 +21,9 @@ pub enum HamlibPttError {
 
     #[error("config error: {0}")]
     Config(#[from] TomlError),
+
+    #[error("rigctl failed: {0}")]
+    RigCtl(ExitStatus),
 }
 
 impl HamlibPttError {

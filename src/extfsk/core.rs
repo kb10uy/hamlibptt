@@ -7,6 +7,7 @@ use crate::{
         show_info_dialog,
     },
     extfsk::ExtfskParameter,
+    rigctl::call_rigctl,
 };
 
 pub fn open(dll_directory: &Path, _parameter: ExtfskParameter) -> Result<()> {
@@ -14,11 +15,21 @@ pub fn open(dll_directory: &Path, _parameter: ExtfskParameter) -> Result<()> {
 
     if let Some(config) = CONFIG.get() {
         show_info_dialog(&format!("{config:#?}"));
+        call_rigctl(
+            &config.rigctl_path,
+            &config.rig,
+            config.commands.open.as_deref(),
+        )?;
     };
 
     Ok(())
 }
 
 pub fn close(config: &Config) -> Result<()> {
+    call_rigctl(
+        &config.rigctl_path,
+        &config.rig,
+        config.commands.close.as_deref(),
+    )?;
     Ok(())
 }

@@ -1,5 +1,6 @@
 mod core;
 mod extfsk;
+mod rigctl;
 
 use std::ffi::{c_int, c_long, c_uchar, c_ulong};
 
