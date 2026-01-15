@@ -8,7 +8,8 @@ use windows::{
 };
 
 pub fn show_info_dialog(message: &str) {
-    let message: Vec<_> = message.encode_utf16().collect();
+    let mut message: Vec<_> = message.encode_utf16().collect();
+    message.push(0);
     unsafe {
         MessageBoxW(
             None,
@@ -20,7 +21,8 @@ pub fn show_info_dialog(message: &str) {
 }
 
 pub fn show_error_dialog(message: &str) {
-    let message: Vec<_> = message.encode_utf16().collect();
+    let mut message: Vec<_> = message.encode_utf16().collect();
+    message.push(0);
     unsafe {
         MessageBoxW(
             None,
