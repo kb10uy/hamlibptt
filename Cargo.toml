@@ -17,6 +17,9 @@ windows = { version = "0.62.2", features = [
     "Win32_UI_WindowsAndMessaging",
 ] }
 
+[build-dependencies]
+static_vcruntime = "3.0"
+
 [profile.release]
 strip = true
 panic = "abort"
