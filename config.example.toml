@@ -15,5 +15,5 @@ tx = [
 rx = [
   "set_ptt", "0",
   "set_mode", "LSB", "-1",
-  "set_level", "MONITOR_GAIN", "0.0"
+  "set_level", "MONITOR_GAIN", "0.0",
 ]

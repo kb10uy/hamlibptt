@@ -1,6 +1,7 @@
-use std::result::Result as StdResult;
+use std::{io::Error as IoError, result::Result as StdResult};
 
 use thiserror::Error as ThisError;
+use toml::de::Error as TomlError;
 use windows::core::Error as WindowsError;
 
 pub type Result<T, E = HamlibPttError> = StdResult<T, E>;
@@ -12,4 +13,10 @@ pub enum HamlibPttError {
 
     #[error("failed to get DLL directory")]
     DllPath,
+
+    #[error("IO error: {0}")]
+    Io(#[from] IoError),
+
+    #[error("config error: {0}")]
+    Config(#[from] TomlError),
 }

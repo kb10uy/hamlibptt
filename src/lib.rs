@@ -13,7 +13,10 @@ use windows::{
     core::{PCSTR, s},
 };
 
-use crate::dll::DLL_DIRECTORY;
+use crate::{
+    config::{CONFIG, load_config},
+    dll::DLL_DIRECTORY,
+};
 
 #[unsafe(no_mangle)]
 pub extern "system" fn DllMain(module: HMODULE, call_reason: c_ulong, _: *mut ()) -> c_int {
@@ -32,18 +35,34 @@ pub extern "system" fn DllMain(module: HMODULE, call_reason: c_ulong, _: *mut ()
 
 #[unsafe(no_mangle)]
 pub extern "system" fn extfskOpen(_parameter: c_long) {
-    let path = DLL_DIRECTORY
-        .get()
-        .map(|p| p.to_string_lossy())
-        .unwrap_or_default();
-    unsafe {
-        MessageBoxA(
-            None,
-            PCSTR(path.as_ptr()),
-            s!("HamlibPTT"),
-            MB_ICONINFORMATION | MB_OK,
-        );
+    let Some(dll_directory) = DLL_DIRECTORY.get() else {
+        return;
+    };
+    match load_config(dll_directory) {
+        Ok(()) => (),
+        Err(e) => {
+            unsafe {
+                MessageBoxA(
+                    None,
+                    PCSTR(e.to_string().as_ptr()),
+                    s!("HamlibPTT"),
+                    MB_ICONINFORMATION | MB_OK,
+                );
+            }
+            return;
+        }
     }
+
+    if let Some(config) = CONFIG.get() {
+        unsafe {
+            MessageBoxA(
+                None,
+                PCSTR(format!("{config:?}").as_ptr()),
+                s!("HamlibPTT"),
+                MB_ICONINFORMATION | MB_OK,
+            );
+        }
+    };
 }
 
 #[unsafe(no_mangle)]
