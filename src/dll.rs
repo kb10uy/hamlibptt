@@ -19,7 +19,7 @@ fn fetch_dll_directory(module: HMODULE) -> Result<()> {
     let dll_path = unsafe {
         let mut buffer = vec![0; 512];
         let length = GetModuleFileNameW(Some(module), &mut buffer) as usize;
-        PathBuf::from(OsString::from_wide(&buffer[..length]))
+        PathBuf::from(OsString::from_wide(&buffer[..length - 1]))
     };
 
     let Some(dll_directory) = dll_path.parent() else {
