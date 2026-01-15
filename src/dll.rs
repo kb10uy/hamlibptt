@@ -18,8 +18,8 @@ pub fn on_dll_detach() -> Result<()> {
 fn fetch_dll_directory(module: HMODULE) -> Result<()> {
     let dll_path = unsafe {
         let mut buffer = vec![0; 512];
-        GetModuleFileNameW(Some(module), &mut buffer);
-        PathBuf::from(OsString::from_wide(&buffer))
+        let length = GetModuleFileNameW(Some(module), &mut buffer) as usize;
+        PathBuf::from(OsString::from_wide(&buffer[..length]))
     };
 
     let Some(dll_directory) = dll_path.parent() else {

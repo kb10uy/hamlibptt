@@ -39,12 +39,6 @@ pub extern "system" fn extfskOpen(_parameter: c_long) {
     unsafe {
         MessageBoxA(
             None,
-            s!("Open!"),
-            s!("extfsk_rs"),
-            MB_ICONINFORMATION | MB_OK,
-        );
-        MessageBoxA(
-            None,
             PCSTR(path.as_ptr()),
             s!("HamlibPTT"),
             MB_ICONINFORMATION | MB_OK,
