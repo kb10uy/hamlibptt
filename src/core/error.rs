@@ -22,8 +22,8 @@ pub enum HamlibPttError {
     #[error("config error: {0}")]
     Config(#[from] TomlError),
 
-    #[error("rigctl failed: {0}")]
-    RigCtl(ExitStatus),
+    #[error("rigctl failed with status {0}: {1}")]
+    RigCtl(ExitStatus, String),
 }
 
 impl HamlibPttError {

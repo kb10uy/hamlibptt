@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use crate::core::{
     config::ConfigRig,
@@ -13,7 +13,10 @@ pub fn call_rigctl(rigctl_path: &str, rig: &ConfigRig, commands: Option<&[String
         return Ok(());
     }
 
-    let mut rigctl = Command::new(rigctl_path)
+    let rigctl = Command::new(rigctl_path)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
         .arg("-m")
         .arg(rig.model_id.to_string())
         .arg("-r")
@@ -21,10 +24,11 @@ pub fn call_rigctl(rigctl_path: &str, rig: &ConfigRig, commands: Option<&[String
         .args(commands)
         .spawn()?;
 
-    let status = rigctl.wait()?;
-    if status.success() {
+    let output = rigctl.wait_with_output()?;
+    if output.status.success() {
         Ok(())
     } else {
-        Err(HamlibPttError::RigCtl(status))
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        Err(HamlibPttError::RigCtl(output.status, stderr.to_string()))
     }
 }
