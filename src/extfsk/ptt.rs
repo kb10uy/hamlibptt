@@ -1,20 +1,12 @@
 use crate::{
     core::{config::Config, error::Result},
-    rigctl::call_rigctl,
+    rigctl::call,
 };
 
 pub fn set_ptt(config: &Config, tx: bool) -> Result<()> {
     if tx {
-        call_rigctl(
-            &config.rigctl_path,
-            &config.rig,
-            config.commands.tx.as_deref(),
-        )
+        call(config, config.commands.tx.as_deref())
     } else {
-        call_rigctl(
-            &config.rigctl_path,
-            &config.rig,
-            config.commands.rx.as_deref(),
-        )
+        call(config, config.commands.rx.as_deref())
     }
 }

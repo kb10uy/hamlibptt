@@ -1,4 +1,4 @@
-use std::{fs::read_to_string, path::Path, sync::OnceLock};
+use std::{fs::read_to_string, net::SocketAddr, path::Path, sync::OnceLock};
 
 use serde::Deserialize;
 
@@ -9,15 +9,29 @@ pub static CONFIG: OnceLock<Config> = OnceLock::new();
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
-    pub rigctl_path: String,
-    pub rig: ConfigRig,
+    pub mode: ConfigControlMode,
+    pub rigctl: Option<ConfigRigctl>,
+    pub rigctld: Option<ConfigRigctld>,
     pub commands: ConfigCommands,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ConfigControlMode {
+    Rigctl,
+    Rigctld,
+}
+
 #[derive(Debug, Clone, Deserialize)]
-pub struct ConfigRig {
+pub struct ConfigRigctl {
+    pub rigctl_path: String,
     pub model_id: usize,
     pub device: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ConfigRigctld {
+    pub address: SocketAddr,
 }
 
 #[derive(Debug, Clone, Deserialize)]

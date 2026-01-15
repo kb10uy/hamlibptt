@@ -10,6 +10,9 @@ pub type Result<T, E = HamlibPttError> = StdResult<T, E>;
 
 #[derive(Debug, ThisError)]
 pub enum HamlibPttError {
+    #[error("invariant broken")]
+    InvalidState,
+
     #[error("error in Windows API: {0}")]
     Windows(#[from] WindowsError),
 
@@ -20,7 +23,10 @@ pub enum HamlibPttError {
     Io(#[from] IoError),
 
     #[error("config error: {0}")]
-    Config(#[from] TomlError),
+    ConfigSyntax(#[from] TomlError),
+
+    #[error("invalid config data")]
+    ConfigDataInvalid,
 
     #[error("rigctl failed with status {0}: {1}")]
     RigCtl(ExitStatus, String),
