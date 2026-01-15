@@ -1,37 +1,35 @@
 pub mod core;
 pub mod fsk;
+pub mod parameter;
 pub mod ptt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ExtfskParameter {
-    pub baud: u16,
-    pub stop_bit: ExtfskStopbit,
-    pub length: u8,
-}
+use std::sync::{Mutex, OnceLock};
 
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ExtfskStopbit {
-    One = 0,
-    OneHalf = 1,
-    Two = 2,
-}
+use crate::{
+    core::{config::ConfigCommands, error::Result},
+    hamlib::HamlibCommander,
+};
 
-impl ExtfskParameter {
-    pub fn parse(parameter: u32) -> ExtfskParameter {
-        let baud = (parameter >> 16) as u16;
-        let stop_bit = match parameter & 0b11 {
-            0 => ExtfskStopbit::One,
-            1 => ExtfskStopbit::OneHalf,
-            2 => ExtfskStopbit::Two,
-            _ => ExtfskStopbit::One,
-        };
-        let length = (parameter >> 2 & 0b1111) as u8;
+static COMMANDER: OnceLock<Mutex<Box<dyn HamlibCommander>>> = OnceLock::new();
+static COMMANDS: OnceLock<ConfigCommands> = OnceLock::new();
 
-        ExtfskParameter {
-            baud,
-            stop_bit,
-            length,
-        }
+
+pub fn run_command(cmd: impl FnOnce(&ConfigCommands) -> &[String]) -> Result<()> {
+    let Some(commander) = COMMANDER.get() else {
+        return Ok(());
+    };
+    let Some(commands) = COMMANDS.get().map(cmd) else {
+        return Ok(());
+    };
+    if commands.is_empty() {
+        return Ok(());
     }
+    let mut locked = commander.lock().expect("lock must be obtained");
+    locked.send(commands)?;
+    Ok(())
+}
+
+fn initialize_backend(commander: Box<dyn HamlibCommander>, commands: ConfigCommands) {
+    COMMANDER.set(Mutex::new(commander)).ok();
+    COMMANDS.set(commands).ok();
 }

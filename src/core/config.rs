@@ -1,11 +1,10 @@
-use std::{fs::read_to_string, net::SocketAddr, path::Path, sync::OnceLock};
+use std::{fs::read_to_string, net::SocketAddr, path::Path};
 
 use serde::Deserialize;
 
 use crate::core::error::Result;
 
 pub const CONFIG_FILENAME: &str = "hamlibptt.toml";
-pub static CONFIG: OnceLock<Config> = OnceLock::new();
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
@@ -19,7 +18,9 @@ pub struct Config {
 #[serde(rename_all = "snake_case")]
 pub enum ConfigControlMode {
     Rigctl,
+    RigctlRetained,
     Rigctld,
+    RigctldRetained,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -42,11 +43,9 @@ pub struct ConfigCommands {
     pub rx: Option<Vec<String>>,
 }
 
-pub fn load_config(directory: &Path) -> Result<()> {
+pub fn load_config(directory: &Path) -> Result<Config> {
     let config_path = directory.join(CONFIG_FILENAME);
     let config_toml = read_to_string(config_path)?;
     let config = toml::from_str(&config_toml)?;
-
-    CONFIG.set(config).ok();
-    Ok(())
+    Ok(config)
 }

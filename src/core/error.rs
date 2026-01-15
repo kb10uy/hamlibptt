@@ -1,18 +1,15 @@
-use std::{io::Error as IoError, process::ExitStatus, result::Result as StdResult};
+use std::{io::Error as IoError, result::Result as StdResult};
 
 use thiserror::Error as ThisError;
 use toml::de::Error as TomlError;
 use windows::core::Error as WindowsError;
 
-use crate::core::show_error_dialog;
+use crate::{core::show_error_dialog, hamlib::HamlibError};
 
 pub type Result<T, E = HamlibPttError> = StdResult<T, E>;
 
 #[derive(Debug, ThisError)]
 pub enum HamlibPttError {
-    #[error("invariant broken")]
-    InvalidState,
-
     #[error("error in Windows API: {0}")]
     Windows(#[from] WindowsError),
 
@@ -28,11 +25,8 @@ pub enum HamlibPttError {
     #[error("invalid config data")]
     ConfigDataInvalid,
 
-    #[error("rigctl failed with status {0}: {1}")]
-    Rigctl(ExitStatus, String),
-
-    #[error("rigctld call failed with status {0}")]
-    Rigctld(String),
+    #[error("hamlib error: {0}")]
+    Hamlib(#[from] HamlibError),
 }
 
 impl HamlibPttError {

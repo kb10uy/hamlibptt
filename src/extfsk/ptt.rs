@@ -1,12 +1,9 @@
-use crate::{
-    core::{config::Config, error::Result},
-    rigctl::call,
-};
+use crate::{core::error::Result, extfsk::run_command};
 
-pub fn set_ptt(config: &Config, tx: bool, _mmsstv_scan: bool) -> Result<()> {
+pub fn set_ptt(tx: bool, _mmsstv_scan: bool) -> Result<()> {
     if tx {
-        call(config, config.commands.tx.as_deref())
+        run_command(|cmds| cmds.tx.as_deref().unwrap_or_default())
     } else {
-        call(config, config.commands.rx.as_deref())
+        run_command(|cmds| cmds.rx.as_deref().unwrap_or_default())
     }
 }
