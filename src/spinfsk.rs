@@ -2,7 +2,7 @@ use std::{
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc::{Receiver, SendError, Sender, TryRecvError, channel},
+        mpsc::{Receiver, RecvTimeoutError, SendError, Sender, TryRecvError, channel},
     },
     thread::{JoinHandle, spawn},
     time::Duration,
@@ -12,6 +12,8 @@ use serialport::{COMPort, Error as SerialPortError, SerialPort};
 use spin_sleep::SpinSleeper;
 
 use crate::core::show_error_dialog;
+
+const RX_TIMEOUT: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Clone)]
 pub struct FskParameter {
@@ -125,7 +127,11 @@ fn run_inner(
     busy.store(false, Ordering::Release);
     set_fsk(true)?;
     while let Err(TryRecvError::Empty) = close.try_recv() {
-        let byte = rx.recv().expect("disconnected");
+        let byte = match rx.recv_timeout(RX_TIMEOUT) {
+            Ok(b) => b,
+            Err(RecvTimeoutError::Timeout) => continue,
+            Err(RecvTimeoutError::Disconnected) => unreachable!("must not be disconnected"),
+        };
         busy.store(true, Ordering::Release);
 
         // start
