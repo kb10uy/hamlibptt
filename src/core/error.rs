@@ -1,5 +1,6 @@
 use std::{io::Error as IoError, result::Result as StdResult};
 
+use serialport::Error as SerialPortError;
 use thiserror::Error as ThisError;
 use toml::de::Error as TomlError;
 use windows::core::Error as WindowsError;
@@ -27,6 +28,9 @@ pub enum HamlibPttError {
 
     #[error("hamlib error: {0}")]
     Hamlib(#[from] HamlibError),
+
+    #[error("serial port error: {0}")]
+    SerialPort(#[from] SerialPortError),
 }
 
 impl HamlibPttError {

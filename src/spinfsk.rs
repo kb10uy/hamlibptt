@@ -15,11 +15,11 @@ use crate::core::show_error_dialog;
 
 #[derive(Debug, Clone)]
 pub struct FskParameter {
-    data_bits: usize,
-    baud: f64,
-    stop_bit: FskStopbit,
-    target: FskTarget,
-    invert: bool,
+    pub data_bits: usize,
+    pub baud: f64,
+    pub stop_bit: FskStopbit,
+    pub target: FskTarget,
+    pub invert: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
