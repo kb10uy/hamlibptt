@@ -88,10 +88,11 @@ impl SpinFsk {
     }
 
     pub fn send(&self, byte: u8) {
-        if self.busy.swap(true, Ordering::AcqRel) {
+        if self.busy.load(Ordering::Acquire) {
             return;
         }
         self.buffer.store(byte, Ordering::Release);
+        self.busy.store(true, Ordering::Release);
     }
 
     pub fn close(&mut self) {
@@ -150,8 +151,8 @@ fn run_inner(
     set_fsk(true)?;
     'wait_data: while !closing.load(Ordering::Acquire) {
         let byte = buffer.load(Ordering::Acquire);
-        if let Ok(true) = busy.compare_exchange(true, false, Ordering::Acquire, Ordering::Relaxed) {
-            sleeper.sleep(half_bit_tick);
+        if let Ok(true) = busy.compare_exchange(true, false, Ordering::AcqRel, Ordering::Relaxed) {
+            sleeper.sleep_ns(10_000);
             continue 'wait_data;
         }
 
