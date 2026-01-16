@@ -1,21 +1,40 @@
+# Connection mode.
+# Available values: "rigctl", "rigctld", "rigctl_retained", "rigctd_retained"
+# In "retained" mode, connection (child process / TCP socket) will *retain* in application process.
 mode = "rigctld"
 
+# Config data for rigctl modes. rigctl child process will spawn.
+# Will error if missing with rigctl modes.
 [rigctl]
+# Path to rigctl executable.
 rigctl_path = "/usr/bin/rigctl"
+# Model ID defined in rigctl. Passed as `-m` argument.
 model_id = 3085
+# Rig device. Passed as `-r` argument.
 device = "/dev/ttyACM0"
 
+# Config data for rigctld modes. TCP connection to rigctld socket will establish.
+# Will error if missing with rigctld modes.
 [rigctld]
+# Socket address of rigctld. Domain names like `localhost` are prohibited.
 address = "127.0.0.1:4532"
 
+# rigctl commands.
+# All fields are optional and expected to be string arrays.
+# Elements are joined with a space and will be sent as single line command.
+# Note that rigctld require leading backslashes for long-style commands.
 [commands]
+# When connection opened.
 open = []
+# When connection closed.
 close = []
+# When PTT enabled.
 tx = [
   "L", "MONITOR_GAIN", "0.15",
   "M", "PKTLSB", "-1",
   "T", "1",
 ]
+# When PTT disabled.
 rx = [
   "T", "0",
   "M", "LSB", "-1",
