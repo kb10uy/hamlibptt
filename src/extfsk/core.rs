@@ -77,7 +77,7 @@ pub fn open(dll_directory: &Path, extfsk_parameter: ExtfskParameter) -> Result<(
     send_hamlib_command(|cmds| cmds.open.as_deref().unwrap_or_default())?;
 
     let fsk_message = match fsk {
-        Some(fsk) => {
+        Some(fsk) if extfsk_parameter.length >= 5 => {
             let parameter = FskParameter {
                 data_bits: extfsk_parameter.length as usize,
                 baud: extfsk_parameter.baud as f64,
@@ -98,7 +98,7 @@ pub fn open(dll_directory: &Path, extfsk_parameter: ExtfskParameter) -> Result<(
             initialize_fsk(spin_fsk);
             message
         }
-        None => "disabled".to_string(),
+        _ => "disabled".to_string(),
     };
 
     show_info_dialog(&format!(
