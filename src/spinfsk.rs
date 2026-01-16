@@ -1,8 +1,7 @@
 use std::{
     sync::{
         Arc,
-        atomic::{AtomicBool, Ordering},
-        mpsc::{Receiver, RecvTimeoutError, SendError, Sender, TryRecvError, channel},
+        atomic::{AtomicBool, AtomicU8, Ordering},
     },
     thread::{JoinHandle, spawn},
     time::Duration,
@@ -12,8 +11,6 @@ use serialport::{COMPort, Error as SerialPortError, SerialPort};
 use spin_sleep::SpinSleeper;
 
 use crate::core::show_error_dialog;
-
-const RX_TIMEOUT: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Clone)]
 pub struct FskParameter {
@@ -41,25 +38,27 @@ pub enum FskStopbit {
 #[derive(Debug)]
 pub struct SpinFsk {
     busy: Arc<AtomicBool>,
-    tx: Sender<u8>,
-    close: Sender<()>,
+    buffer: Arc<AtomicU8>,
+    closing: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
 }
 
 impl SpinFsk {
     pub fn start(device: &str, parameter: FskParameter) -> Result<SpinFsk, SerialPortError> {
         let busy = Arc::new(AtomicBool::new(false));
-        let (tx, data_rx) = channel();
-        let (close, close_rx) = channel();
+        let buffer = Arc::new(AtomicU8::new(0));
+        let closing = Arc::new(AtomicBool::new(false));
 
         let port = serialport::new(device, 9600).open_native()?;
-        let busy_rx = busy.clone();
-        let thread = spawn(move || run(port, parameter, data_rx, close_rx, busy_rx));
+        let rx_buffer = buffer.clone();
+        let rx_closing = closing.clone();
+        let rx_busy = busy.clone();
+        let thread = spawn(move || run(port, parameter, rx_buffer, rx_closing, rx_busy));
 
         Ok(SpinFsk {
             busy,
-            tx,
-            close,
+            buffer,
+            closing,
             thread: Some(thread),
         })
     }
@@ -68,8 +67,11 @@ impl SpinFsk {
         self.busy.load(Ordering::Acquire)
     }
 
-    pub fn send(&self, byte: u8) -> Result<(), SendError<u8>> {
-        self.tx.send(byte)
+    pub fn send(&self, byte: u8) {
+        if self.busy.swap(true, Ordering::AcqRel) {
+            return;
+        }
+        self.buffer.store(byte, Ordering::Release);
     }
 
     pub fn close(&mut self) {
@@ -77,7 +79,7 @@ impl SpinFsk {
             return;
         };
 
-        self.close.send(()).expect("close must be sent");
+        self.closing.store(true, Ordering::Release);
         thread.join().expect("FSK thread panicked");
     }
 }
@@ -91,11 +93,11 @@ impl Drop for SpinFsk {
 fn run(
     port: COMPort,
     parameter: FskParameter,
-    rx: Receiver<u8>,
-    close: Receiver<()>,
+    buffer: Arc<AtomicU8>,
+    closing: Arc<AtomicBool>,
     busy: Arc<AtomicBool>,
 ) {
-    match run_inner(port, parameter, rx, close, busy) {
+    match run_inner(port, parameter, buffer, closing, busy) {
         Ok(()) => (),
         Err(e) => {
             show_error_dialog(&format!("FSK error: {e}"));
@@ -106,8 +108,8 @@ fn run(
 fn run_inner(
     mut port: COMPort,
     parameter: FskParameter,
-    rx: Receiver<u8>,
-    close: Receiver<()>,
+    buffer: Arc<AtomicU8>,
+    closing: Arc<AtomicBool>,
     busy: Arc<AtomicBool>,
 ) -> Result<(), SerialPortError> {
     let mut set_fsk = move |bit: bool| match parameter.target {
@@ -126,13 +128,12 @@ fn run_inner(
 
     busy.store(false, Ordering::Release);
     set_fsk(true)?;
-    while let Err(TryRecvError::Empty) = close.try_recv() {
-        let byte = match rx.recv_timeout(RX_TIMEOUT) {
-            Ok(b) => b,
-            Err(RecvTimeoutError::Timeout) => continue,
-            Err(RecvTimeoutError::Disconnected) => unreachable!("must not be disconnected"),
-        };
-        busy.store(true, Ordering::Release);
+    'wait_data: while !closing.load(Ordering::Acquire) {
+        let byte = buffer.load(Ordering::Acquire);
+        if let Ok(true) = busy.compare_exchange(true, false, Ordering::Acquire, Ordering::Relaxed) {
+            sleeper.sleep(half_bit_tick);
+            continue 'wait_data;
+        }
 
         // start
         set_fsk(false)?;
@@ -146,8 +147,6 @@ fn run_inner(
         // stop
         set_fsk(true)?;
         sleeper.sleep(stop_bit_tick);
-
-        busy.store(false, Ordering::Release);
     }
     Ok(())
 }
