@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     sync::{
         Arc,
         atomic::{AtomicBool, AtomicU8, Ordering},
@@ -33,6 +34,25 @@ pub enum FskStopbit {
     One,
     OneHalf,
     Two,
+}
+
+impl Display for FskParameter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.2}baud, {}bits, ", self.baud, self.data_bits)?;
+        match self.stop_bit {
+            FskStopbit::One => write!(f, "1 stop bit, ")?,
+            FskStopbit::OneHalf => write!(f, "1.5 stop bit, ")?,
+            FskStopbit::Two => write!(f, "2 stop bit, ")?,
+        }
+        match self.target {
+            FskTarget::Dtr => write!(f, "control DTR")?,
+            FskTarget::Rts => write!(f, "control RTS")?,
+        }
+        if self.invert {
+            write!(f, " inverted",)?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
