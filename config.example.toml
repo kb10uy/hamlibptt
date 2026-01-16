@@ -1,9 +1,12 @@
-# PTT Settings ----------------------------------------------------------------
-
 # Connection mode.
 # Available values: "rigctl", "rigctld", "rigctl_retained", "rigctd_retained"
 # In "retained" mode, connection (child process / TCP socket) will *retain* in application process.
 mode = "rigctld"
+
+# Set true to enable FSK (disabled by default).
+enable_fsk = false
+
+# PTT Settings ----------------------------------------------------------------
 
 # Config data for rigctl modes. rigctl child process will spawn.
 # Will error if missing with rigctl modes.
@@ -44,10 +47,6 @@ rx = [
 ]
 
 # FSK Settings ----------------------------------------------------------------
-# FSK feature is *disabled by default*.
-
-# Set true to enable FSK.
-enable_fsk = false
 
 # Config data for FSK.
 # Will error if FSK is enabled.
