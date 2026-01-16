@@ -28,6 +28,15 @@ pub fn send_hamlib_command(cmd: impl FnOnce(&ConfigCommands) -> &[String]) -> Re
     Ok(())
 }
 
+pub fn close_commander() -> Result<()> {
+    let Some(commander) = HAMLIB_COMMANDER.get() else {
+        return Ok(());
+    };
+    let mut locked = commander.lock().expect("lock must be obtained");
+    locked.close()?;
+    Ok(())
+}
+
 fn initialize_backend(commander: Box<dyn HamlibCommander>, commands: ConfigCommands) {
     HAMLIB_COMMANDER.set(Mutex::new(commander)).ok();
     COMMANDS.set(commands).ok();

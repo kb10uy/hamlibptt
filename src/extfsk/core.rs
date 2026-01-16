@@ -6,7 +6,9 @@ use crate::{
         error::{HamlibPttError, Result},
         show_info_dialog,
     },
-    extfsk::{initialize_backend, parameter::ExtfskParameter, send_hamlib_command},
+    extfsk::{
+        close_commander, initialize_backend, parameter::ExtfskParameter, send_hamlib_command,
+    },
     hamlib::{
         HamlibCommander,
         rigctl::{RetainedRigctlCommander, RigctlCommander},
@@ -71,5 +73,6 @@ pub fn open(dll_directory: &Path, _parameter: ExtfskParameter) -> Result<()> {
 
 pub fn close() -> Result<()> {
     send_hamlib_command(|cmds| cmds.close.as_deref().unwrap_or_default())?;
+    close_commander()?;
     Ok(())
 }
