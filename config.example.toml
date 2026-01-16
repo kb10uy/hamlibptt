@@ -1,3 +1,5 @@
+# PTT Settings ----------------------------------------------------------------
+
 # Connection mode.
 # Available values: "rigctl", "rigctld", "rigctl_retained", "rigctd_retained"
 # In "retained" mode, connection (child process / TCP socket) will *retain* in application process.
@@ -40,3 +42,19 @@ rx = [
   "M", "LSB", "-1",
   "L", "MONITOR_GAIN", "0.0",
 ]
+
+# FSK Settings ----------------------------------------------------------------
+# FSK feature is *disabled by default*.
+
+# Set true to enable FSK.
+enable_fsk = false
+
+# Config data for FSK.
+# Will error if FSK is enabled.
+[fsk]
+# FSK port.
+device = "/dev/ttyACM1"
+# Bit-bang target. Available values: "DTR", "RTS"
+target = "DTR"
+# (Optional) Invert bits.
+invert = false
