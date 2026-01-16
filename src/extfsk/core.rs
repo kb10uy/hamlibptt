@@ -22,7 +22,7 @@ use crate::{
 pub fn open(dll_directory: &Path, extfsk_parameter: ExtfskParameter) -> Result<()> {
     let config = load_config(dll_directory)?;
 
-    let (commander, status): (Box<dyn HamlibCommander>, _) = match config.mode {
+    let (commander, ptt_message): (Box<dyn HamlibCommander>, _) = match config.mode {
         ConfigControlMode::Rigctl => {
             let Some(rigctl) = &config.rigctl else {
                 return Err(HamlibPttError::ConfigDataInvalid);
@@ -75,32 +75,35 @@ pub fn open(dll_directory: &Path, extfsk_parameter: ExtfskParameter) -> Result<(
 
     initialize_ptt(commander, config.commands.clone());
     send_hamlib_command(|cmds| cmds.open.as_deref().unwrap_or_default())?;
-    show_info_dialog(&format!(
-        "PTT Initialized successfully!\nOperating {status}"
-    ));
 
-    if let Some(fsk) = fsk {
-        let parameter = FskParameter {
-            data_bits: extfsk_parameter.length as usize,
-            baud: extfsk_parameter.baud as f64,
-            stop_bit: match extfsk_parameter.stop_bit {
-                ExtfskStopbit::One => FskStopbit::One,
-                ExtfskStopbit::OneHalf => FskStopbit::OneHalf,
-                ExtfskStopbit::Two => FskStopbit::Two,
-            },
-            target: match fsk.target {
-                ConfigFskTarget::Dtr => FskTarget::Dtr,
-                ConfigFskTarget::Rts => FskTarget::Rts,
-            },
-            invert: fsk.invert.unwrap_or(false),
-        };
-        let spin_fsk = SpinFsk::start(&fsk.device, parameter)?;
-        initialize_fsk(spin_fsk);
-        show_info_dialog(&format!(
-            "PTT Initialized successfully!\nOperating {}",
-            fsk.device
-        ));
-    }
+    let fsk_message = match fsk {
+        Some(fsk) => {
+            let parameter = FskParameter {
+                data_bits: extfsk_parameter.length as usize,
+                baud: extfsk_parameter.baud as f64,
+                stop_bit: match extfsk_parameter.stop_bit {
+                    ExtfskStopbit::One => FskStopbit::One,
+                    ExtfskStopbit::OneHalf => FskStopbit::OneHalf,
+                    ExtfskStopbit::Two => FskStopbit::Two,
+                },
+                target: match fsk.target {
+                    ConfigFskTarget::Dtr => FskTarget::Dtr,
+                    ConfigFskTarget::Rts => FskTarget::Rts,
+                },
+                invert: fsk.invert.unwrap_or(false),
+            };
+            let message = format!("enabled on {} ({})", fsk.device, parameter);
+
+            let spin_fsk = SpinFsk::start(&fsk.device, parameter)?;
+            initialize_fsk(spin_fsk);
+            message
+        }
+        None => "disabled".to_string(),
+    };
+
+    show_info_dialog(&format!(
+        "Initialized successfully!\n\nPTT: {ptt_message}\n\nFSK: {fsk_message}"
+    ));
 
     Ok(())
 }
