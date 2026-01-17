@@ -55,5 +55,5 @@ rx = [
 device = "/dev/ttyACM1"
 # Bit-bang target. Available values: "DTR", "RTS"
 target = "DTR"
-# (Optional) Invert bits.
+# (Optional) Invert data bits. Attention confusing with MMTTY's "Inverted Logic" and "Rev".
 invert = false
