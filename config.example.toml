@@ -3,6 +3,11 @@
 # In "retained" mode, connection (child process / TCP socket) will *retain* in application process.
 mode = "rigctld"
 
+# Set true to enable FSK (disabled by default).
+enable_fsk = false
+
+# PTT Settings ----------------------------------------------------------------
+
 # Config data for rigctl modes. rigctl child process will spawn.
 # Will error if missing with rigctl modes.
 [rigctl]
@@ -40,3 +45,15 @@ rx = [
   "M", "LSB", "-1",
   "L", "MONITOR_GAIN", "0.0",
 ]
+
+# FSK Settings ----------------------------------------------------------------
+
+# Config data for FSK.
+# Will error if FSK is enabled.
+[fsk]
+# FSK port.
+device = "/dev/ttyACM1"
+# Bit-bang target. Available values: "DTR", "RTS"
+target = "DTR"
+# (Optional) Invert data bits. Attention confusing with MMTTY's "Inverted Logic" and "Rev".
+invert = false

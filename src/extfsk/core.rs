@@ -2,24 +2,27 @@ use std::path::Path;
 
 use crate::{
     core::{
-        config::{ConfigControlMode, load_config},
+        config::{ConfigControlMode, ConfigFskTarget, load_config},
         error::{HamlibPttError, Result},
         show_info_dialog,
     },
     extfsk::{
-        close_commander, initialize_backend, parameter::ExtfskParameter, send_hamlib_command,
+        close_commander, close_fsk, initialize_fsk, initialize_ptt,
+        parameter::{ExtfskParameter, ExtfskStopbit},
+        send_hamlib_command,
     },
     hamlib::{
         HamlibCommander,
         rigctl::{RetainedRigctlCommander, RigctlCommander},
         rigctld::{RetainedRigctldCommander, RigctldCommander},
     },
+    spinfsk::{FskParameter, FskStopbit, FskTarget, SpinFsk},
 };
 
-pub fn open(dll_directory: &Path, _parameter: ExtfskParameter) -> Result<()> {
+pub fn open(dll_directory: &Path, extfsk_parameter: ExtfskParameter) -> Result<()> {
     let config = load_config(dll_directory)?;
 
-    let (commander, status): (Box<dyn HamlibCommander>, _) = match config.mode {
+    let (commander, ptt_message): (Box<dyn HamlibCommander>, _) = match config.mode {
         ConfigControlMode::Rigctl => {
             let Some(rigctl) = &config.rigctl else {
                 return Err(HamlibPttError::ConfigDataInvalid);
@@ -64,9 +67,43 @@ pub fn open(dll_directory: &Path, _parameter: ExtfskParameter) -> Result<()> {
         }
     };
 
-    initialize_backend(commander, config.commands.clone());
+    let fsk = match (config.enable_fsk, config.fsk) {
+        (Some(true), Some(fsk)) => Some(fsk),
+        (Some(true), None) => return Err(HamlibPttError::ConfigDataInvalid),
+        _ => None,
+    };
+
+    initialize_ptt(commander, config.commands.clone());
     send_hamlib_command(|cmds| cmds.open.as_deref().unwrap_or_default())?;
-    show_info_dialog(&format!("Initialized successfully!\nOperating {status}"));
+
+    let fsk_message = match fsk {
+        Some(fsk) if extfsk_parameter.length >= 5 => {
+            let parameter = FskParameter {
+                data_bits: extfsk_parameter.length as usize,
+                baud: extfsk_parameter.baud as f64,
+                stop_bit: match extfsk_parameter.stop_bit {
+                    ExtfskStopbit::One => FskStopbit::One,
+                    ExtfskStopbit::OneHalf => FskStopbit::OneHalf,
+                    ExtfskStopbit::Two => FskStopbit::Two,
+                },
+                target: match fsk.target {
+                    ConfigFskTarget::Dtr => FskTarget::Dtr,
+                    ConfigFskTarget::Rts => FskTarget::Rts,
+                },
+                invert: fsk.invert.unwrap_or(false),
+            };
+            let message = format!("enabled on {} ({})", fsk.device, parameter);
+
+            let spin_fsk = SpinFsk::start(&fsk.device, parameter)?;
+            initialize_fsk(spin_fsk);
+            message
+        }
+        _ => "disabled".to_string(),
+    };
+
+    show_info_dialog(&format!(
+        "Initialized successfully!\n\nPTT: {ptt_message}\n\nFSK: {fsk_message}"
+    ));
 
     Ok(())
 }
@@ -74,5 +111,6 @@ pub fn open(dll_directory: &Path, _parameter: ExtfskParameter) -> Result<()> {
 pub fn close() -> Result<()> {
     send_hamlib_command(|cmds| cmds.close.as_deref().unwrap_or_default())?;
     close_commander()?;
+    close_fsk();
     Ok(())
 }

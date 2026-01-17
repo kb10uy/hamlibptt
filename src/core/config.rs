@@ -12,6 +12,8 @@ pub struct Config {
     pub rigctl: Option<ConfigRigctl>,
     pub rigctld: Option<ConfigRigctld>,
     pub commands: ConfigCommands,
+    pub enable_fsk: Option<bool>,
+    pub fsk: Option<ConfigFsk>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -41,6 +43,20 @@ pub struct ConfigCommands {
     pub close: Option<Vec<String>>,
     pub tx: Option<Vec<String>>,
     pub rx: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ConfigFsk {
+    pub device: String,
+    pub target: ConfigFskTarget,
+    pub invert: Option<bool>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ConfigFskTarget {
+    Dtr,
+    Rts,
 }
 
 pub fn load_config(directory: &Path) -> Result<Config> {
